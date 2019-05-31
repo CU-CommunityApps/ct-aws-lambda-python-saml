@@ -138,6 +138,7 @@ The Lambda Function handles the following requests specifically:
   ```
   https://shib-testbed.aws.cucloud.net/private/*.html
   ```
+- `GET` to `https://shib-testbed.aws.cucloud.net/saml/test` - This shows a simple form for pasting in a base64-encoded (but NOT URL-encoded) `SAMLResponse` and `RelayState`. Submitting this form will `POST` to `/saml/consume` to simulate getting a SAML response from the SAML IdP. This can be used to test SAML responses and ensure that old responses and manually altered responses are not processed as valid.
 - `GET` to `https://shib-testbed.aws.cucloud.net/delete-cookies` - This request will trigger the Lambda Function to respond with a request that the browser delete CloudFront-related cookies. This effectively de-authorizes a client.
 - `GET` to `https://shib-testbed.aws.cucloud.net/cookies` - A request to this URL will automatically provide signed cookies for accessing the private content. It would **NOT** be provided or used in a real deployment, but is useful for testing and debugging. Functionally, it forces the system to consider the client authorized, and provides the same signed cookies that are provided when the client successfully completed the SAML SSO process.
 - `GET` to `https://shib-testbed.aws.cucloud.net/index.html` - This will return a simple page with links on it to exercise the deployment.
