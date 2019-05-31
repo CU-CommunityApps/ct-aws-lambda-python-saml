@@ -1,0 +1,552 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Python implementation of SAML SP
+Parameters:
+  CloudFrontDNSNameParam:
+    Type: String
+    Default: shib-testbed.aws.cucloud.net
+  CloudFrontCertificateIdParam:
+    Type: String
+    Default: "ef4bb1f2-e10f-4419-99a4-3d78b9cf319d" # e.g., *.aws.cucloud.net
+  LocalDNSNameParam:
+    Type: String
+    Default: shib-testbed.cs.cucloud.net
+  LocalHostedZoneNameParam:
+    Type: String
+    Default: cs.cucloud.net.
+  APIGatewayDNSNameParam:
+    Type: String
+    Default: shib-python.cs.cucloud.net
+  APIGatewayCertificateIdParam:
+    Type: String
+    Default: "9d434082-50a4-4553-a34a-91d2386db7e8" # e.g., *.cs.cucloud.net
+  LambdaPathPrefixParam:
+    Type: String
+    Description: You should not need to fiddle with this parameter value.
+    Default: /python
+  AllowedRoleArnsParam:
+    Type: String
+    Default: '["arn:aws:iam::012345678901:role/shib-admin", "arn:aws:iam::123456789012:role/shib-admin"]'
+  AllowedNetIDsParam:
+    Type: String
+    Default: '["abc123", "xyz789"]'
+  SamlIdpHostNameParam:
+    Type: String
+    Default: shibidp-test.cit.cornell.edu
+    # Default: shibidp.cit.cornell.edu
+  SamlIdpX509CertificateParam:
+    Type: String
+    # shibidp-test.cit.cornell.edu
+    Default: 
+      "MIIDXDCCAkSgAwIBAgIVAMKCR8IGXIOzO/yLt6e4sd7OMLgEMA0GCSqGSIb3DQEBBQUAMCcxJTAjBgNVBAMTHHNoaWJpZHAtdGVzdC5jaXQuY29ybmVsbC5lZHUwHhcNMTIwNjA3MTg0NjIyWhcNMzIwNjA3MTg0NjIyWjAnMSUwIwYDVQQDExxzaGliaWRwLXRlc3QuY2l0LmNvcm5lbGwuZWR1MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkhlf9EP399mqnBtGmPG9Vqu79Af2NZhhsT+LTMA1uhPZYv4RX/E4VD+Iqce/EUP1ndPkGEwBnhrRT2ZegDpCmgo+EcED8cAh9AbwFTTitmBjxvErtJnS0ZBfMCLDcgOV1zM6bT5fF9SAIm0ZVSaeyQbNDwVDdwsBQHjAdg5vLd5VeYH9MI6enzdgBtPNSrEt3qZtCWl7ev8YQlWF3vZ+EoyDrWPZSOWzgR31QBs7mz13ABSveIri68FgNth9ylgFS7VNUlAp6xx6BRnMgL1QzVMZ5F4PbSRDp3UBoS6PMHd+WFenJWPPh6ShMyrInrJ4QAPfKC77tJW+GUXl4T4DqQIDAQABo38wfTBcBgNVHREEVTBTghxzaGliaWRwLXRlc3QuY2l0LmNvcm5lbGwuZWR1hjNodHRwczovL3NoaWJpZHAtdGVzdC5jaXQuY29ybmVsbC5lZHUvaWRwL3NoaWJib2xldGgwHQYDVR0OBBYEFF9RADnmBsO50hD8T+MUFqIgWAOxMA0GCSqGSIb3DQEBBQUAA4IBAQBqYpfdK4XAYE56sYmq/vUKOSBcbO2Uy3R7oTGrDKxrZI7xC1jchaaTW6BXtg6wzTSn8Jo2M0gvQrWyxZgQDrXGaL2TaPf5WjOWt/SsuJ+IShofS6ZWLkPCnrR0Ag9PwU58szw2jjUE4eJyv/dLDzhDHJ0EGastgSzRh1r3v2w8BYz1RHvjwESPB2HTgV1iuHwaIjaJxN39XyS6ZQzBj6sZ6Lem1R39zXmEvtVfCk9qgSKnbYulrrkIBzxllB34TUTKFs+Nz1j/sg2gj6Q5u9uW6mSm66mqn2E53r2CNHPTzWGwom5Mi9Z/DtOb2L/5jjxhFvCKxnEbIWm7XIe8qtqo"
+    # shibidp.cit.cornell.edu   
+    # Default: 
+    #   "MIIDSDCCAjCgAwIBAgIVAOZ8NfBem6sHcI7F39sYmD/JG4YDMA0GCSqGSIb3DQEBBQUAMCIxIDAeBgNVBAMTF3NoaWJpZHAuY2l0LmNvcm5lbGwuZWR1MB4XDTA5MTEyMzE4NTI0NFoXDTI5MTEyMzE4NTI0NFowIjEgMB4GA1UEAxMXc2hpYmlkcC5jaXQuY29ybmVsbC5lZHUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCTURo990uuODo/5ju3GZThcT67K3RXW69jwlBwfn3png75Dhyw9Xa50RFv0EbdfrojH1P19LyfCjubfsm9Z7FYkVWSVdPSvQ0BXx7zQxdTpE9137qj740tMJr7Wi+iWdkyBQS/bCNhuLHeNQor6NXZoBgX8HvLy4sCUb/4v7vbp90HkmP3FzJRDevzgr6PVNqWwNqptZ0vQHSF5D3iBNbxq3csfRGQQyVi729XuWMSqEjPhhkf1UjVcJ3/cG8tWbRKw+W+OIm71k+99kOgg7IvygndzzaGDVhDFMyiGZ4njMzEJT67sEq0pMuuwLMlLE/86mSvuGwO2Qacb1ckzjodAgMBAAGjdTBzMFIGA1UdEQRLMEmCF3NoaWJpZHAuY2l0LmNvcm5lbGwuZWR1hi5odHRwczovL3NoaWJpZHAuY2l0LmNvcm5lbGwuZWR1L2lkcC9zaGliYm9sZXRoMB0GA1UdDgQWBBSQgitoP2/rJMDepS1sFgM35xw19zANBgkqhkiG9w0BAQUFAAOCAQEAaFrLOGqMsbX1YlseO+SM3JKfgfjBBL5TP86qqiCuq9a1J6B7Yv+XYLmZBy04EfV0L7HjYX5aGIWLDtz9YAis4g3xTPWe1/bjdltUq5seRuksJjybprGI2oAv/ShPBOyrkadectHzvu5K6CL7AxNTWCSXswtfdsuxcKo65tO5TRO1hWlr7Pq2F+Oj2hOvcwC0vOOjlYNe9yRE9DjJAzv4rrZUg71R3IEKNjfOF80LYPAFD2Spp36uB6TmSYl1nBmS5LgWF4EpEuODPSmy4sIV6jl1otuyI/An2dOcNqcgu7tYEXLXC8N6DXggDWPtPRdpk96UW45huvXudpZenrcd7A=="  
+  SigningKeySecretsManagerNameParam:
+    Type: String
+    Default: '/my-signing-key'
+    NoEcho: true
+
+Globals:
+  Api:
+    # Allows www.example.com to call these APIs
+    # SAM will automatically add AllowMethods with a list of methods for this API
+    # Cors: "'https://www.www.example.com'"
+
+    # API Gateway regional endpoints
+    EndpointConfiguration: REGIONAL
+
+    # Send/receive binary data through the APIs
+    # BinaryMediaTypes:
+      # decodes to "*/*" when deployed
+      # - "*~1*"
+      
+    # Compression is triggered when response body size is greater than or equal to your configured threshold
+    MinimumCompressionSize: 1024
+
+    # Logging, Metrics, Throttling, and all other Stage settings
+    MethodSettings: [{
+        # Turn on Info logging
+        "LoggingLevel": "INFO",
+
+        # Enable Metrics
+        "MetricsEnabled": True,
+
+        # Trace-level Logging
+        "DataTraceEnabled": True,
+
+        # On all Paths & methods
+        "ResourcePath": "/*",
+        "HttpMethod": "*",
+    }]
+    
+Resources:
+
+  # PythonSAMLAPI2:
+  #   Type: 'AWS::ApiGateway::RestApi'
+  #   Properties:
+  #     Name: Python SAML API
+  #     Description: API to proxy Lambda Python SAML SP
+
+  # PythonSAMLAPI2Stage:
+  #   Type: 'AWS::ApiGateway::Stage'
+  #   Properties:
+  #     DeploymentId: !Ref ApiDeployment
+  #     RestApiId: !Ref PythonSAMLAPI2
+  #     StageName: default
+
+  # ApiDeployment:
+  #   Type: 'AWS::ApiGateway::Deployment'
+  #   Properties:
+  #     RestApiId: !Ref PythonSAMLAPI2
+  #     StageName: DummyStage
+
+  PythonSAMLAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: default
+
+  PythonSAMLAPIDNS:
+    Type: AWS::ApiGateway::DomainName
+    Properties: 
+      # CertificateArn: 
+      DomainName: !Ref APIGatewayDNSNameParam
+      EndpointConfiguration: 
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Sub "arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${APIGatewayCertificateIdParam}"
+        
+  PythonSAMLAPIDNSBase:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: [ PythonSAMLAPI, PythonSAMLSPFunction ]
+    Properties: 
+      # BasePath: String
+      DomainName: !Ref APIGatewayDNSNameParam
+      RestApiId: !Ref PythonSAMLAPI
+      Stage: default
+
+  Route53Record:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt PythonSAMLAPIDNS.RegionalDomainName
+        EvaluateTargetHealth: false
+        HostedZoneId: !GetAtt PythonSAMLAPIDNS.RegionalHostedZoneId
+      Comment: This record is created by a CloudFormation temaplate. Do not edit or delete.
+      HostedZoneName: !Ref LocalHostedZoneNameParam
+      Name: !Ref APIGatewayDNSNameParam
+      Type: A
+
+
+  SAMLPythonLibsLayer:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      CompatibleRuntimes: 
+        - python3.6
+        - python3.7
+      Content: 
+        S3Bucket: public.cloud.cit.cornell.edu
+        S3Key: lambda/layers/ct-aws-python-saml/python36-onelogin-saml-2019-05-24.zip
+      Description: Libraries required for python3-saml and cryptography
+      # LayerName: String
+      LicenseInfo: https://github.com/onelogin/python3-saml/blob/master/LICENSE
+          
+  PythonSAMLSPFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Description: Python implementation of SAML SP
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Policies:
+        - "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - Statement:
+          - Action: [ 'secretsmanager:GetSecretValue' ]
+            Effect: Allow
+            Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SigningKeySecretsManagerNameParam}-*"
+
+      Runtime: python3.6
+      Timeout: 10
+      Layers:
+        - !Ref SAMLPythonLibsLayer
+      Tags:
+        "Technical Contact": pea1
+      Events:
+        PythonSAMLAPIRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref PythonSAMLAPI
+        PythonSAMLAPIGreedy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref PythonSAMLAPI
+      Environment:
+        Variables:
+          "SAML_IDP_HOSTNAME": !Ref SamlIdpHostNameParam
+          "SAML_SP_HOSTNAME": !Ref CloudFrontDNSNameParam
+          "SAML_SP_INTERNAL_PATH_PREFIX": !Ref LambdaPathPrefixParam
+          "TARGET_ROLE_ARNS": !Ref AllowedRoleArnsParam
+          "TARGET_NETIDS": !Ref AllowedNetIDsParam
+          "SAML_IDP_X509_CERT" : !Ref SamlIdpX509CertificateParam
+          "SECRETS_MANAGER_SECRET_NAME" : !Ref SigningKeySecretsManagerNameParam
+
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties: 
+      CloudFrontOriginAccessIdentityConfig: 
+        Comment: !Sub "S3 bucket ${SiteBucket}"
+
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: LogDeliveryWrite
+      # BucketName: String
+      # LifecycleConfiguration:
+      #   Rules:
+      #     -
+            # NOTE: Keep all content only 1 year
+            # AbortIncompleteMultipartUpload:
+            #   AbortIncompleteMultipartUpload
+            # ExpirationDate: String
+            # ExpirationInDays: 30
+            # Id: keep-30-days
+            # NoncurrentVersionExpirationInDays: Integer
+            # NoncurrentVersionTransition (deprecated):
+            #   NoncurrentVersionTransition
+            # NoncurrentVersionTransitions:
+            #   - NoncurrentVersionTransition
+            # Prefix: String
+            # Status: Enabled
+            # TagFilters:
+            #   - TagFilter
+            # Transition (deprecated):
+            #   Transition
+            # NOTE: S3 website logs are going to be tiny, so not worth the metadata overhead of moving to Glacier
+            # See: https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-transition-general-considerations.html#before-deciding-to-archive-objects
+            # Transitions:
+              # - StorageClass: GLACIER
+                # TransitionDate: String
+                # TransitionInDays: 90
+          # -
+          #   # NOTE: move CloudFront logs to Glacier after 90 days
+          #   # NOTE: smaller s3 website logs aren't worth moving to Glacier
+          #   # AbortIncompleteMultipartUpload:
+          #   #   AbortIncompleteMultipartUpload
+          #   # ExpirationDate: String
+          #   # ExpirationInDays: 365
+          #   Id: glacier-at-90-days
+          #   # NoncurrentVersionExpirationInDays: Integer
+          #   # NoncurrentVersionTransition (deprecated):
+          #   #   NoncurrentVersionTransition
+          #   # NoncurrentVersionTransitions:
+          #   #   - NoncurrentVersionTransition
+          #   Prefix: cloudfront-logs
+          #   Status: Enabled
+          #   # TagFilters:
+          #   #   - TagFilter
+          #   # Transition (deprecated):
+          #   #   Transition
+          #   Transitions:
+          #     - StorageClass: GLACIER
+          #       # TransitionDate: String
+          #       TransitionInDays: 90
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: s3-website-logs/
+      # MetricsConfigurations:
+      #   - MetricsConfiguration
+      # NotificationConfiguration:
+      #   NotificationConfiguration
+      # ReplicationConfiguration:
+      #   ReplicationConfiguration
+      Tags:
+        -
+          Key: "Technical Contact"
+          Value: pea1
+        # -
+        #   Key: Environment
+        #   Value: !Ref EnvironmentParam
+      # VersioningConfiguration:
+      #   Status: Enabled
+      WebsiteConfiguration:
+        ErrorDocument: error.html
+        IndexDocument: index.html
+        # RedirectAllRequestsTo:
+        #   Redirect all requests rule
+        # RoutingRules:
+        #   - Routing rule
+
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Statement:
+          -
+            Sid: Grant CloudFront Origin Identity access to private content
+            Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource:
+              - !Sub "arn:aws:s3:::${SiteBucket}/*"
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId 
+
+  LoggingBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+          AccessControl: LogDeliveryWrite
+          # BucketName: String
+          LifecycleConfiguration:
+            Rules:
+              -
+                # NOTE: Keep all content only 1 year
+                # AbortIncompleteMultipartUpload:
+                #   AbortIncompleteMultipartUpload
+                # ExpirationDate: String
+                ExpirationInDays: 30
+                Id: keep-30-days
+                # NoncurrentVersionExpirationInDays: Integer
+                # NoncurrentVersionTransition (deprecated):
+                #   NoncurrentVersionTransition
+                # NoncurrentVersionTransitions:
+                #   - NoncurrentVersionTransition
+                # Prefix: String
+                Status: Enabled
+                # TagFilters:
+                #   - TagFilter
+                # Transition (deprecated):
+                #   Transition
+                # NOTE: S3 website logs are going to be tiny, so not worth the metadata overhead of moving to Glacier
+                # See: https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-transition-general-considerations.html#before-deciding-to-archive-objects
+                # Transitions:
+                  # - StorageClass: GLACIER
+                    # TransitionDate: String
+                    # TransitionInDays: 90
+              # -
+              #   # NOTE: move CloudFront logs to Glacier after 90 days
+              #   # NOTE: smaller s3 website logs aren't worth moving to Glacier
+              #   # AbortIncompleteMultipartUpload:
+              #   #   AbortIncompleteMultipartUpload
+              #   # ExpirationDate: String
+              #   # ExpirationInDays: 365
+              #   Id: glacier-at-90-days
+              #   # NoncurrentVersionExpirationInDays: Integer
+              #   # NoncurrentVersionTransition (deprecated):
+              #   #   NoncurrentVersionTransition
+              #   # NoncurrentVersionTransitions:
+              #   #   - NoncurrentVersionTransition
+              #   Prefix: cloudfront-logs
+              #   Status: Enabled
+              #   # TagFilters:
+              #   #   - TagFilter
+              #   # Transition (deprecated):
+              #   #   Transition
+              #   Transitions:
+              #     - StorageClass: GLACIER
+              #       # TransitionDate: String
+              #       TransitionInDays: 90
+          # LoggingConfiguration:
+          #   LoggingConfiguration
+          # MetricsConfigurations:
+          #   - MetricsConfiguration
+          # NotificationConfiguration:
+          #   NotificationConfiguration
+          # ReplicationConfiguration:
+          #   ReplicationConfiguration
+          Tags:
+            -
+              Key: "Technical Contact"
+              Value: pea1
+            # -
+            #   Key: Environment
+            #   Value: !Ref EnvironmentParam
+          # VersioningConfiguration:
+          #   Status: Enabled
+          # WebsiteConfiguration:
+          #   WebsiteConfiguration
+
+  CloudFrontDistribution:
+      Type: "AWS::CloudFront::Distribution"
+      DependsOn:
+        - LoggingBucket
+      Properties:
+        DistributionConfig:
+          Aliases:
+            - !Ref CloudFrontDNSNameParam
+          CacheBehaviors:
+            - AllowedMethods: 
+                - GET
+                - HEAD
+              CachedMethods: 
+                - GET
+                - HEAD
+              Compress: true
+              DefaultTTL: 0
+              # FieldLevelEncryptionId: String
+              ForwardedValues: 
+                  # Cookies: 
+                  #   Cookies
+                  # Headers: 
+                  #   - String
+                  QueryString: false
+                  # QueryStringCacheKeys: 
+                  #   - String
+              # LambdaFunctionAssociations: 
+              #   - LambdaFunctionAssociation
+              MaxTTL: 0
+              MinTTL: 0
+              PathPattern: /public/*
+              SmoothStreaming: false
+              TargetOriginId:  s3-content-bucket
+              # TrustedSigners: 
+              #   - String
+              ViewerProtocolPolicy: redirect-to-https
+            - AllowedMethods: 
+                - GET
+                - HEAD
+              CachedMethods: 
+                - GET
+                - HEAD
+              Compress: true
+              DefaultTTL: 0
+              # FieldLevelEncryptionId: String
+              ForwardedValues: 
+                  # Cookies: 
+                  #   Cookies
+                  # Headers: 
+                  #   - String
+                  QueryString: false
+                  # QueryStringCacheKeys: 
+                  #   - String
+              # LambdaFunctionAssociations: 
+              #   - LambdaFunctionAssociation
+              MaxTTL: 0
+              MinTTL: 0
+              PathPattern: /private/*
+              SmoothStreaming: false
+              TargetOriginId:  s3-content-bucket
+              TrustedSigners: 
+                - self
+              ViewerProtocolPolicy: redirect-to-https
+          # Comment: String
+          CustomErrorResponses:
+            -
+              ErrorCachingMinTTL: 30
+              ErrorCode: 403
+              ResponseCode: 403
+              ResponsePagePath: /not-authorized
+            # -
+            #   ErrorCachingMinTTL: 300
+            #   ErrorCode: 404
+            #   ResponseCode: 200
+            #   ResponsePagePath: /index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+              - POST
+              - PUT
+              - PATCH
+              - OPTIONS
+              - DELETE
+            # CachedMethods:
+            #   -
+            # Compress: Boolean
+            DefaultTTL: 0
+            ForwardedValues:
+              Cookies:
+                  Forward: all
+                  # WhitelistedNames: 
+                  #   - String
+              Headers:
+                - CloudFront-Expires
+                - CloudFront-Key-Pair-Id
+                - CloudFront-Policy
+                - cloudFront-Signature
+              QueryString: true
+              # QueryStringCacheKeys:
+              #   - String
+            # LambdaFunctionAssociations:
+            #   - LambdaFunctionAssociation
+            MaxTTL: 0
+            MinTTL: 0
+            # SmoothStreaming: Boolean
+            TargetOriginId:
+              !Ref APIGatewayDNSNameParam
+            # TrustedSigners:
+            #   - String
+            ViewerProtocolPolicy : redirect-to-https
+          DefaultRootObject: index.html
+          Enabled: true
+          HttpVersion: http2
+          IPV6Enabled: false
+          Logging:
+            Bucket: !GetAtt LoggingBucket.DomainName
+            IncludeCookies: true
+            Prefix: cloudfront-logs
+          Origins:
+            -
+              DomainName: !Ref APIGatewayDNSNameParam
+              Id: !Ref APIGatewayDNSNameParam
+              OriginPath: !Ref LambdaPathPrefixParam
+              CustomOriginConfig:
+                # HTTPPort: Integer
+                # HTTPSPort: Integer
+                # OriginKeepaliveTimeout: Integer
+                OriginProtocolPolicy: https-only
+                # OriginReadTimeout: Integer
+                # OriginSSLProtocols: 
+                #   - String
+            -
+              DomainName: !GetAtt SiteBucket.DomainName
+              Id: s3-content-bucket
+              S3OriginConfig:
+                OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+          PriceClass: PriceClass_100
+          # Restrictions:
+          #   Restriction
+          ViewerCertificate:
+            AcmCertificateArn: !Sub "arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CloudFrontCertificateIdParam}"
+            # CloudFrontDefaultCertificate: Boolean
+            # IamCertificateId: String
+            MinimumProtocolVersion: TLSv1.1_2016
+            SslSupportMethod: sni-only
+          # WebACLId: String
+        Tags:
+          -
+            Key: "Technical Contact"
+            Value: pea1
+            
+  CloudFrontRoute53Record:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        EvaluateTargetHealth: false
+        HostedZoneId: Z2FDTNDATAQYW2
+      Comment: This record is created by a CloudFormation temaplate. Do not edit or delete.
+      HostedZoneName: !Ref LocalHostedZoneNameParam
+      Name: !Ref LocalDNSNameParam
+      Type: A
+
+Outputs:
+  CloudFrontDNSNameParam:
+    Description: "URL that end users should use to access deployment"
+    Value: !Sub "https://${CloudFrontDNSNameParam}/"
+    
+  CNAMECommand:
+    Description: "DNS CNAME required (Route 53 or DNSDB)"
+    Value: !Sub "${CloudFrontDNSNameParam} CNAME ${LocalDNSNameParam}"
+
+  ContentBucketName:
+    Description: "Name of the S3 bucket for holding static content"
+    Value: !Ref SiteBucket
+    
+  SyncCommand:
+    Description: "CLI command to sync static content to site bucket"
+    Value: !Sub "aws s3 sync static-content/ s3://${SiteBucket}"

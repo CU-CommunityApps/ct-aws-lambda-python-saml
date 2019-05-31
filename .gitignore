@@ -1,0 +1,13 @@
+.application.json
+
+# Libraries for Lambda environment
+*.so
+*.so.*
+/asn1crypto
+/lxml
+/isodate
+/cffi
+/defusedxml
+/cryptography
+/onelogin
+saml-assertion.sample.xml
