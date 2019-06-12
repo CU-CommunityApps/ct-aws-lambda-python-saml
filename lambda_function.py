@@ -99,7 +99,7 @@ def get_not_authorized_html(event):
 def get_saml_test_form_html(event):
     return f'''<html>
 <body>
-  <h1>Test SAML Reponses</h1>
+  <h1>Test SAML Responses</h1>
   <form action="/saml/consume" method="post">
     <p>
         RelayState:<br />
