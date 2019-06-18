@@ -131,10 +131,12 @@ Note that the plaintext representation of the keys will have new lines represent
 ## Audit Logging
 
 This example has logging enabled in all places that it can be enabled:
-- **CloudFront** - The CloudFront distribution is configured to log all viewer requests to an S3 bucket (also created by the deployment). In addition, CloduFront configuration specifies that cookies sent with request be logged.
-- **API Gateway** - The API configuration in this deployment enables API Gateway to log the full requests and responses of the API to CloudWatch. By default this logs at the `INFO` level, but `ERROR` level can optionally be configured if you only want to log errors. 
+- **CloudFront** - The CloudFront distribution is configured to log all viewer requests to an S3 bucket (also created by the deployment). In addition, CloduFront configuration specifies that cookies sent with request be logged. Since cookies in requests are logged, the signed cookies offered by clients to CloudFront can be matched to cookies logged by the Lambda function (see below).
+- **API Gateway** - The API configuration in this deployment enables API Gateway to log the full requests and responses of the API to CloudWatch. By default this logs at the `INFO` level, but `ERROR` level can optionally be configured if you only want to log errors. Since API Gateway is logging full requests and responses, signed cookies and SAML responses are also logged here.
 - **S3** - The S3 bucket containing the static public and private content is configured to enable server access logging. Thus, it will log all the requests for content that it receives from CloudFront. It logs that information to another S3 bucket.
-- **Lambda** - The Lambda function deployed in this solution logs a lot of information to CloudWatch.
+- **Lambda** - The Lambda function deployed in this solution logs a lot of information to CloudWatch. As deployed, the Lambda function logs all requests and responses. Thus, raw SAML responses and the cookies generated are logged, providing a key piece of the puzzle if you wish to connect Cornell NetIds to signed-cookie access to the private content via CloudFront.
+
+
 
 ## URLs Handled by API Gateway and Lambda Python Function
 
