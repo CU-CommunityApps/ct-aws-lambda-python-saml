@@ -128,6 +128,14 @@ Note that the plaintext representation of the keys will have new lines represent
 
 # Details
 
+## Audit Logging
+
+This example has logging enabled in all places that it can be enabled:
+- **CloudFront** - The CloudFront distribution is configured to log all viewer requests to an S3 bucket (also created by the deployment). In addition, CloduFront configuration specifies that cookies sent with request be logged.
+- **API Gateway** - The API configuration in this deployment enables API Gateway to log the full requests and responses of the API to CloudWatch. By default this logs at the `INFO` level, but `ERROR` level can optionally be configured if you only want to log errors. 
+- **S3** - The S3 bucket containing the static public and private content is configured to enable server access logging. Thus, it will log all the requests for content that it receives from CloudFront. It logs that information to another S3 bucket.
+- **Lambda** - The Lambda function deployed in this solution logs a lot of information to CloudWatch.
+
 ## URLs Handled by API Gateway and Lambda Python Function
 
 If `CloudFrontDNSNameParam` is `shib-testbed.aws.cucloud.net` then requests for URLsare routed to the Lambda Function except those that match:
