@@ -39,12 +39,15 @@ It answers this question that the Cloud Team at Cornell is sometimes asked:
 1. (Optional) Request that your deployment be integrated with Cornell Shibboleth. This is optional because the default deployment provides a `/cookies` URL that provides the same cookies as if your client got authorized via a SAML assertion. See [Configuring Shibboleth IdP](#configuring-shibboleth-idp).
 1. Try out your deployment at `https://[CloudFrontDNSNameParam]/` 
 
-**TROUBLESHOOTING DEPLOYMENT**
+#### TROUBLESHOOTING DEPLOYMENT
 
-`PythonSAMLAPIDNSBase` fails to create in CloudFormation stack.
+##### `PythonSAMLAPIDNSBase` fails to create in CloudFormation stack.
 
 This situation may happen because CloudFormation tries to create `PythonSAMLAPIDNSBase` before the API stage `default` is fully created. If this happens, rerun the CloudFormation template, but this time with the `PythonSAMLAPIDNSBase` resource commented out. Once that is successful, uncomment the `PythonSAMLAPIDNSBase` and update the CloudFormation stack.
 
+##### "CloudWatch logs role ARN must be set in account settings to enable logging"
+
+In order to log to CloudWatch, API Gateway must be provided with a role ARN to use for that logging. This needs to be configured in API Gateway once for each region. See https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions.
 
 ### Prerequisites and Inputs
 
