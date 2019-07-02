@@ -83,6 +83,10 @@ In order to log to CloudWatch, API Gateway must be provided with a role ARN to u
 - Example: `'["abc123","xzy789"]'`
 - Example: `'[]'` (empty list)
 
+**`AllowUnauthorizedCookiesParam`**
+- String value of "true" or "false" that is passed as an environment variable to the Lambda function. If "false", then the Lambda function won't respond to a `GET /cookies` request by returning CloudFront signed cookies. For testing purposes a "true" value is useful to understand how the CloudFront signed cookies work. The default is "false" because you don't want to deploy this solution in production and accidentally treat all requests to `/cookies` as if made by an authorized user.
+- Example: 'false'
+
 **`SamlIdpHostNameParam`**
 - The SAML Identity Provider host name. This example is specifically configured to use the URLs of the test or production Shibboleth SAML IdP at Cornell.
 - Example: `shibidp-test.cit.cornell.edu`

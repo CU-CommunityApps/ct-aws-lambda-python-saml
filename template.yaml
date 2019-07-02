@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: Python implementation of SAML SP
+Description: Python implementation of SAML SP; see README.md
 Parameters:
   CloudFrontDNSNameParam:
     Type: String
@@ -27,6 +27,12 @@ Parameters:
   AllowedNetIDsParam:
     Type: String
     Default: '["abc123", "xyz789"]'
+  AllowUnauthorizedCookiesParam:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
   SamlIdpHostNameParam:
     Type: String
     Default: shibidp-test.cit.cornell.edu
@@ -171,6 +177,7 @@ Resources:
           "TARGET_NETIDS": !Ref AllowedNetIDsParam
           "SAML_IDP_X509_CERT" : !Ref SamlIdpX509CertificateParam
           "SECRETS_MANAGER_SECRET_NAME" : !Ref SigningKeySecretsManagerNameParam
+          "ALLOW_UNAUTHORIZED_COOKIES" : !Ref AllowUnauthorizedCookiesParam
 
   CloudFrontOAI:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity

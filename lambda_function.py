@@ -23,6 +23,8 @@ SAML_SP_ROOT_URL = 'https://'+ SAML_SP_HOSTNAME
 
 SECRETS_MANAGER_SECRET_NAME = os.environ.get('SECRETS_MANAGER_SECRET_NAME', 'cloudfront-signing-key-secret')
 
+ALLOW_UNAUTHORIZED_COOKIES = os.environ.get("ALLOW_UNAUTHORIZED_COOKIES", "False").lower() in ["true", "1", "yes", "y"]
+
 # Value should be a JSON array of role ARNs
 EXAMPLE_TARGET_ROLE_ARNS = '[]'
 TARGET_ROLE_ARNS = json.loads(os.environ.get('TARGET_ROLE_ARNS', EXAMPLE_TARGET_ROLE_ARNS))
@@ -116,6 +118,15 @@ def get_saml_test_form_html(event):
 </body>
 </html>
 '''
+
+def get_unauthorized_cookies_html(event):
+    return f'''<html>
+<body>
+  <p>The deployment configuration of this example does not allow you to get signed cookies without authorization.</p>
+  <p>If you wish to allow any user to get signed cookies for example purposes, set the AllowUnauthorizedCookiesParam parameter in template.yaml to "true" and update the deployment.</p>
+</body>
+</html>
+'''    
 
 def get_set_cookie_value(name, value, domain=SAML_SP_HOSTNAME, path='/'):
     return f'{name}={value}; domain={domain}; path={path}; secure; HttpOnly; SameSite=strict'
@@ -262,8 +273,11 @@ def lambda_handler(event, context):
         del_cookie('CloudFront-Expires', cookies)
         response = response_redirect(SAML_SP_ROOT_URL, cookies)
     elif path == SAML_SP_INTERNAL_PATH_PREFIX  + '/cookies':
-        cookies = get_signed_cookies(get_real_client_ip(event))
-        response = response_redirect(SAML_SP_ROOT_URL, cookies)
+        if ALLOW_UNAUTHORIZED_COOKIES:
+            cookies = get_signed_cookies(get_real_client_ip(event))
+            response = response_redirect(SAML_SP_ROOT_URL, cookies)
+        else:
+            response = respond_html(get_unauthorized_cookies_html(event), cookies)
     elif path == SAML_SP_INTERNAL_PATH_PREFIX  + '/saml/consume':
         response = saml_consume(event, cookies)
     elif path == SAML_SP_INTERNAL_PATH_PREFIX  + '/saml/test':
