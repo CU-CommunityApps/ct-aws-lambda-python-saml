@@ -33,9 +33,9 @@ It answers this question that the Cloud Team at Cornell is sometimes asked:
       ```
       $ aws s3 sync static-content/ s3://cloud9-pea1-python-saml-sitebucket-jvsng1tqexmu
       ```
-1. Create a CNAME from `CloudFrontDNSNameParam` to `LocalDNSNameParam`. 
-   - If `CloudFrontDNSNameParam` is a `cornell.edu` name, you will need to create this CNAME in Cornell DNSDB.
-   - If `CloudFrontDNSNameParam` is in a domain hosted by AWS Route 53, do it there.
+1. Create a CNAME from `CloudFrontDNSNameParam` to the CloudFront distribution domain name.
+   - If `CloudFrontDNSNameParam` is a `cornell.edu` name, you will need to create this CNAME in Cornell DNSDB. Check the output of the template (in CloudFormation) for `CNAMECommand`. This should work as a batch command in DNSDB.
+   - If `CloudFrontDNSNameParam` is in a domain hosted by AWS Route 53, do it there. In Route 53 your can create an `A` record with an alais to `CloudFrontDistributionDNS`. Check the output of the template (in CloudFormation) for the value of `CloudFrontDistributionDNS`.
 1. (Optional) Request that your deployment be integrated with Cornell Shibboleth. This is optional because the default deployment provides a `/cookies` URL that provides the same cookies as if your client got authorized via a SAML assertion. See [Configuring Shibboleth IdP](#configuring-shibboleth-idp).
 1. Try out your deployment at `https://[CloudFrontDNSNameParam]/` 
 
@@ -52,19 +52,15 @@ In order to log to CloudWatch, API Gateway must be provided with a role ARN to u
 ### Prerequisites and Inputs
 
 **`CloudFrontDNSNameParam`**
-- The DNS name that is the user front door for the solution. This should be a CNAME to `LocalDNSNameParam`.
+- The DNS name that is the user front door for the solution. You will need to configure this name in your DNS tool (i.e., Cornell DNSDB or AWS Route 53) as part of the deployment process.
 - Example: `shib-testbed.aws.cucloud.net`
 
 **`CloudFrontCertificateIdParam`**
 - The Id (not the full ARN) of the ACM certificate for the user front door (`CloudFrontDNSNameParam`). Must exist locally in the deployment region and AWS account.
 - Example: `ef4bb1f2-e10f-4419-99a4-3d78b9cf319d` (*.aws.cucloud.net)
-  
-**`LocalDNSNameParam`**
-- The DNS name of the deployment in the Route53 hosted zone controlled in the current AWS account. This allows for the deployment to be made in an AWS account that does not host the `CloudFrontDNSNameParam` CNAME in its own Route53 hosted zone. This name is not visible to end users.
-- Example: `shib-testbed.cs.cucloud.net`
 
 **`LocalHostedZoneNameParam`**
-- The full name (including `.` at the end) of the Route53 hosted zone controlled in the current AWS account. This hosted zone should contain both the `LocalDNSNameParam` and the `APIGatewayDNSNameParam`
+- The full name (including `.` at the end) of the Route53 hosted zone controlled in the current AWS account. This hosted zone should contain the `APIGatewayDNSNameParam`.
 - Example: `cs.cucloud.net.`
 
 **`APIGatewayDNSNameParam`**

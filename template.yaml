@@ -8,9 +8,6 @@ Parameters:
   CloudFrontCertificateIdParam:
     Type: String
     Default: "ef4bb1f2-e10f-4419-99a4-3d78b9cf319d" # e.g., *.aws.cucloud.net
-  LocalDNSNameParam:
-    Type: String
-    Default: shib-testbed.cs.cucloud.net
   LocalHostedZoneNameParam:
     Type: String
     Default: cs.cucloud.net.
@@ -81,25 +78,6 @@ Globals:
     }]
     
 Resources:
-
-  # PythonSAMLAPI2:
-  #   Type: 'AWS::ApiGateway::RestApi'
-  #   Properties:
-  #     Name: Python SAML API
-  #     Description: API to proxy Lambda Python SAML SP
-
-  # PythonSAMLAPI2Stage:
-  #   Type: 'AWS::ApiGateway::Stage'
-  #   Properties:
-  #     DeploymentId: !Ref ApiDeployment
-  #     RestApiId: !Ref PythonSAMLAPI2
-  #     StageName: default
-
-  # ApiDeployment:
-  #   Type: 'AWS::ApiGateway::Deployment'
-  #   Properties:
-  #     RestApiId: !Ref PythonSAMLAPI2
-  #     StageName: DummyStage
 
   PythonSAMLAPI:
     Type: AWS::Serverless::Api
@@ -521,27 +499,19 @@ Resources:
           -
             Key: "Technical Contact"
             Value: pea1
-            
-  CloudFrontRoute53Record:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      AliasTarget:
-        DNSName: !GetAtt CloudFrontDistribution.DomainName
-        EvaluateTargetHealth: false
-        HostedZoneId: Z2FDTNDATAQYW2
-      Comment: This record is created by a CloudFormation temaplate. Do not edit or delete.
-      HostedZoneName: !Ref LocalHostedZoneNameParam
-      Name: !Ref LocalDNSNameParam
-      Type: A
 
 Outputs:
   CloudFrontDNSNameParam:
     Description: "URL that end users should use to access deployment"
     Value: !Sub "https://${CloudFrontDNSNameParam}/"
     
+  CloudFrontDistributionDNS:
+    Description: "The actual DNS name of the CloudFront distribution"
+    Value: !GetAtt CloudFrontDistribution.DomainName
+  
   CNAMECommand:
     Description: "DNS CNAME required (Route 53 or DNSDB)"
-    Value: !Sub "${CloudFrontDNSNameParam} CNAME ${LocalDNSNameParam}"
+    Value: !Join [ ' ', [ !Ref CloudFrontDNSNameParam, 'CNAME',  !GetAtt CloudFrontDistribution.DomainName ] ]
 
   ContentBucketName:
     Description: "Name of the S3 bucket for holding static content"
