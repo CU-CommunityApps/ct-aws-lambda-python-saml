@@ -113,7 +113,7 @@ Creating this key pair and storing it in Secrets Manager is a one-time process, 
 
 Your secret should have multiple key-value pairs and should be named as follows:
 - `access-key-id` - The access key ID of the CloudFront key pair.
-- `private-key-id` - The RSA private key text of the key pair
+- `private-key` - The RSA private key text of the key pair
 - `public-key` - The public half of the keypair; technically this isn't required for this deployment, but it seems like a good idea to keep it around.
 
 The plaint text of your entire Secrets Manager secret should look something like this:
