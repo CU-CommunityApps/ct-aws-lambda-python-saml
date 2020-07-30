@@ -204,7 +204,7 @@ def saml_consume(event, cookies):
         return response_get_not_authorized_html("<html><body><h1>Invalid SAML Reponse</h1><pre>{}</pre></body></html>".format(str(e)))
 
     attributes = processed_saml_response.get_attributes()
-    roles = attributes["https://aws.amazon.com/SAML/Attributes/Role"]
+    roles = attributes.get('https://aws.amazon.com/SAML/Attributes/Role', [])
     roles_arns = []
     roles_str = ""
     for r in roles:
@@ -215,7 +215,7 @@ def saml_consume(event, cookies):
     intersection = set(roles_arns) & set(TARGET_ROLE_ARNS)
     authorized_via_role = bool(intersection)
 
-    netid = attributes[SAML_ATTRIBUTE_NETID][0]
+    netid = attributes.get(SAML_ATTRIBUTE_NETID, ['error-net-id-is-missing-from-saml-response'])[0]
     authorized_via_netid = netid in TARGET_NETIDS
 
     authorized = authorized_via_netid or authorized_via_role
@@ -231,11 +231,12 @@ audiences:  { processed_saml_response.get_audiences() }
 get_issuers: { processed_saml_response.get_issuers() }
 get_nameid: { processed_saml_response.get_nameid() }
 netid: { netid }
-email_address: { attributes["urn:oid:0.9.2342.19200300.100.1.3"][0] }
-Full name: { attributes["urn:oid:2.5.4.3"][0]}
-Display name: { attributes["urn:oid:2.16.840.1.113730.3.1.241"][0]}
-Given name: { attributes["urn:oid:2.5.4.42"][0]}
-Surname: { attributes["urn:oid:2.5.4.4"][0]}
+email_address: { attributes.get("urn:oid:0.9.2342.19200300.100.1.3", ['missing'])[0] }
+Full name: { attributes.get("urn:oid:2.5.4.3", ['missing'])[0] }
+Display name: { attributes.get("urn:oid:2.16.840.1.113730.3.1.241", ['missing'])[0] }
+Given name: { attributes.get("urn:oid:2.5.4.42", ['missing'])[0] }
+Surname: { attributes.get("urn:oid:2.5.4.4", ['missing'])[0] }
+
 roles: { roles_str }
 </pre>
 </body></html>
