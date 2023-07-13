@@ -20,6 +20,7 @@ Since this solution was developed, several articles have been published describi
 - [Secure Your Static Website with AWS CloudFront and Lambda](https://vthub.medium.com/lambda-edge-and-jwt-authentication-to-protect-sensitive-components-of-your-reactjs-app-901e0c10fd35)
 - [How to Deploy Static Website with OAuth 2.0 Authorization, CloudFront CDN in 20 Minutes?](https://www.ernestchiang.com/en/posts/2021/howto-deploy-static-website-with-authorization-in-20-minutes/)
 - [Using IAM Identity Center to Protect your CloudFront Served App](https://www.serverlessguru.com/blog/use-iam-identity-center-aws-sso-to-protect-your-cloudfront-served-application)
+- [Managing access to your Amazon S3 objects with a custom authorizer](https://aws.amazon.com/blogs/storage/managing-access-to-your-amazon-s3-objects-with-a-custom-authorizer/)
 
 ## Deployment
 
