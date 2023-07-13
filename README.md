@@ -12,7 +12,7 @@ It answers this question that the Cloud Team at Cornell is sometimes asked:
 
 ## Other Solutions
 
-Since this solution was developed, several articles have been published describing similar approaches and architecture for securiig S3 content:
+Since this solution was developed, several articles have been published describing similar approaches and architecture for securing S3 content:
 - [Adding Authentication to Static Sites with AWS Lambda](https://douglasduhaime.com/posts/s3-lambda-auth.html )
 - [SAML for Your Serverless JavaScript Application: Part II](https://aws.amazon.com/blogs/compute/saml-for-your-serverless-javascript-application-part-ii/)
 - [Authorization@Edge – How to Use Lambda@Edge and JSON Web Tokens to Enhance Web Application Security](https://aws.amazon.com/blogs/networking-and-content-delivery/authorizationedge-how-to-use-lambdaedge-and-json-web-tokens-to-enhance-web-application-security/)
